@@ -1,40 +1,63 @@
 #include <Arduino.h>
 #include <Display.h>
+unsigned int buttonPin = 8;  // Pin waar de button is verbonden
+unsigned int buttonPin2 = 9; // Pin waar de button is verbonden
+int peopleCount = 0;         // Variabele om het aantal mensen bij te houden
+const unsigned long debounceDelay = 50; // Debounce tijd in milliseconden
 
-const int buttonPin = 8; // Pin waar de button is verbonden
-const int ledPin = 4;    // Pin waar de LED is verbonden
-
+bool lastButtonState = HIGH;  // Vorige status van de button
+bool lastButtonState2 = HIGH; // Vorige status van de button2
 
 void setup() {
     // Initialiseer de seriële poort
     Serial.begin(9600);
 
-    // Initialiseer de LED pin als output
-    pinMode(ledPin, OUTPUT);
-
-    // Initialiseer de button pin als input met pull-up weerstand
+    // Initialiseer de button pinnen als input met pull-up weerstand
     pinMode(buttonPin, INPUT_PULLUP);
+    pinMode(buttonPin2, INPUT_PULLUP);
 
-    // Initialiseer het display
-
-    Display.show("Ready"); // Laat een startbericht zien
+    // Print een startbericht naar de seriële monitor
+    Serial.println("Festival People Counter Initialized");
 }
 
 void loop() {
-    // Lees de status van de button
-    int buttonState = digitalRead(buttonPin);
+    // Lees de status van de buttons
+    bool buttonState = digitalRead(buttonPin);
+    bool buttonState2 = digitalRead(buttonPin2);
 
-    // Controleer of de button is ingedrukt
-    if (buttonState == LOW) {
-        // Button is ingedrukt, schakel de LED in en toon een bericht op het display
-        digitalWrite(ledPin, HIGH);
-        Display.show("pres");
-    } else {
-        // Button is niet ingedrukt, schakel de LED uit en toon een ander bericht op het display
-        digitalWrite(ledPin, LOW);
-        Display.show("not");
+    // Controleer of de button is ingedrukt (LOW) en de status is veranderd
+    if (buttonState == LOW && lastButtonState == HIGH) {
+        // Verhoog de mensen teller
+        peopleCount++;
+
+        // Print het aantal mensen naar de seriële monitor
+        Serial.print("Person entered at: ");
+        Serial.print(millis() / 1000); // Tijd in seconden
+        Serial.print(" seconds. Total people: ");
+        Serial.println(peopleCount);
+
+        // Wacht een korte tijd om stuiteren van de button te voorkomen
+        delay(debounceDelay);
     }
 
-    // Wacht een korte tijd om stuiteren van de button te voorkomen
-    delay(50);
+    // Controleer of de button2 is ingedrukt (LOW) en de status is veranderd
+    if (buttonState2 == LOW && lastButtonState2 == HIGH) {
+        // Verlaag de mensen teller alleen als het aantal mensen groter is dan 0
+        if (peopleCount > 0) {
+            peopleCount--;
+
+            // Print het aantal mensen naar de seriële monitor
+            Serial.print("Person left at: ");
+            Serial.print(millis() / 1000); // Tijd in seconden
+            Serial.print(" seconds. Total people: ");
+            Serial.println(peopleCount);
+
+            // Wacht een korte tijd om stuiteren van de button te voorkomen
+            delay(debounceDelay);
+        }
+    }
+    Display.show(peopleCount);
+    // Update de laatste button status
+    lastButtonState = buttonState;
+    lastButtonState2 = buttonState2;
 }
