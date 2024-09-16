@@ -3,7 +3,7 @@
 
 const int buttonPin = 8;  // Pin waar de button is verbonden
 const int buttonPin2 = 9; // Pin waar de button is verbonden
-unsigned long peopleCount = 0; // Variabele om het aantal mensen bij te houden
+unsigned int peopleCount = 0; // Variabele om het aantal mensen bij te houden
 const unsigned long debounceDelay = 200; // Debounce tijd in milliseconden
 
 bool lastButtonState = HIGH;  // Vorige status van de button
@@ -59,7 +59,7 @@ void loop() {
     }
 
     // Toon het aantal mensen op het display
-    Display.show(static_cast<int>(peopleCount));// Converteer peopleCount naar int voor weergave
+    Display.show((int)(peopleCount));// Converteer peopleCount naar int voor weergave
 
     // Update de laatste button status
     lastButtonState = buttonState;
