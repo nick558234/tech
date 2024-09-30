@@ -1,13 +1,16 @@
 #include <Arduino.h>
 #include <Display.h>
 
-const int buttonPin = 8;  // Pin waar de button is verbonden
-const int buttonPin2 = 9; // Pin waar de button is verbonden
+const int buttonPin = 8;  // Pin voor de button om het terrein te betreden
+const int buttonPin2 = 9; // Pin voor de button om het terrein te verlaten
+const int ledPins[] = {4, 5, 7}; // Pinnen voor de LEDs
+const int numLeds = 3; // Aantal LEDs
 unsigned int peopleCount = 0; // Variabele om het aantal mensen bij te houden
 const unsigned long debounceDelay = 200; // Debounce tijd in milliseconden
 
 bool lastButtonState = HIGH;  // Vorige status van de button
 bool lastButtonState2 = HIGH; // Vorige status van de button2
+int currentLedIndex = 0; // Huidige LED index
 
 void setup() {
     // Initialiseer de seriële poort
@@ -17,8 +20,18 @@ void setup() {
     pinMode(buttonPin, INPUT_PULLUP);
     pinMode(buttonPin2, INPUT_PULLUP);
 
+    // Initialiseer de LED pinnen als output
+    for (int i = 0; i < numLeds; i++) {
+        pinMode(ledPins[i], OUTPUT);
+        digitalWrite(ledPins[i], LOW); // Zet alle LEDs uit
+    }
+
     // Print een startbericht naar de seriële monitor
     Serial.println("Festival People Counter Initialized");
+}
+if (/* condition */)
+{
+    /* code */
 }
 
 void loop() {
@@ -36,6 +49,13 @@ void loop() {
         Serial.print(millis() / 1000); // Tijd in seconden
         Serial.print(" seconds. Total people: ");
         Serial.println(peopleCount);
+
+        // Zet de huidige LED uit
+        digitalWrite(ledPins[currentLedIndex], LOW);
+
+        // Verhoog de LED index en zet de volgende LED aan
+        currentLedIndex = (currentLedIndex + 1) % numLeds;
+        digitalWrite(ledPins[currentLedIndex], HIGH);
 
         // Wacht een korte tijd om stuiteren van de button te voorkomen
         delay(debounceDelay);
@@ -59,7 +79,7 @@ void loop() {
     }
 
     // Toon het aantal mensen op het display
-    Display.show((int)(peopleCount));// Converteer peopleCount naar int voor weergave
+    Display.show((int)(peopleCount)); // Converteer peopleCount naar int voor weergave
 
     // Update de laatste button status
     lastButtonState = buttonState;
