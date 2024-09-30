@@ -1,51 +1,44 @@
 #include <Arduino.h>
 #include <Display.h>
 
-const int buttonPin = 8;  // Pin waar de button is verbonden
-const int buttonPin2 = 9; // Pin waar de button is verbonden
-const int ledPin = 4;     // Pin waar de LED is verbonden
-const int ledPin2 = 6;    // Pin waar de LED is verbonden
+const int buttonPin = 8;
+const int buttonPin2 = 9;
+const int ledPin = 4;
+const int ledPin2 = 6;
 int count = 3;
 int count2 = 5;
+unsigned long lastDebounceTime1 = 0;
+unsigned long lastDebounceTime2 = 0;
+const unsigned long debounceDelay = 50;
+
 void setup()
 {
-  // Initialiseer de seriële poort
   Serial.begin(9600);
-
-  // Initialiseer de LED pin als output
   pinMode(ledPin, OUTPUT);
   pinMode(ledPin2, OUTPUT);
-
-  // Initialiseer de button pin als input met pull-up weerstand
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(buttonPin2, INPUT_PULLUP);
-
-  // Initialiseer het display
-  Display.show("Ready"); // Laat een startbericht zien
+  Display.show("Ready");
 }
 
 void turnLedOn()
 {
-    digitalWrite(ledPin, HIGH);
-    Display.show("pres");
-    delay(400);
-    digitalWrite(ledPin, LOW);
-    Display.show("off");
-    delay(400);
-
-
+  digitalWrite(ledPin, HIGH);
+  Display.show("pres");
+  delay(400);
+  digitalWrite(ledPin, LOW);
+  Display.show("off");
+  delay(400);
 }
 
 void turnLed2On()
 {
-
   digitalWrite(ledPin2, HIGH);
   Display.show("pres");
   delay(400);
   digitalWrite(ledPin2, LOW);
   Display.show("off");
-    delay(400);
-
+  delay(400);
 }
 
 void turnbothLedOn()
@@ -59,26 +52,42 @@ void turnbothLedOn()
   Display.show("off");
   delay(400);
 }
+
+bool buttonRead(int pin, unsigned long &lastDebounceTime)
+{
+  int reading = digitalRead(pin);
+  if (reading == LOW)
+  {
+    if ((millis() - lastDebounceTime) > debounceDelay)
+    {
+      lastDebounceTime = millis();
+      return true;
+    }
+  }
+  return false;
+}
+
 void loop()
 {
-  // Lees de status van de button
-  int buttonState = digitalRead(buttonPin);
-  int buttonState2 = digitalRead(buttonPin2);
-
-  // Controleer of de button is ingedrukt
-  if (buttonState == LOW && buttonState2 == LOW) {
-    for (int i = 0; i < count2; i++) {
+  if (buttonRead(buttonPin, lastDebounceTime1) && buttonRead(buttonPin2, lastDebounceTime2))
+  {
+    for (int i = 0; i < count2; i++)
+    {
       turnbothLedOn();
     }
-  } else if (buttonState == LOW) {
-    for (int i = 0; i < count; i++) {
+  }
+  else if (buttonRead(buttonPin, lastDebounceTime1))
+  {
+    for (int i = 0; i < count; i++)
+    {
       turnLedOn();
     }
-  } else if (buttonState2 == LOW) {
-    for (int i = 0; i < count; i++) {
+  }
+  else if (buttonRead(buttonPin2, lastDebounceTime2))
+  {
+    for (int i = 0; i < count; i++)
+    {
       turnLed2On();
     }
   }
-  // Wacht een korte tijd om stuiteren van de button te voorkomen
-  delay(50);
 }
