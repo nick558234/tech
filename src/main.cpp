@@ -54,12 +54,14 @@ void loop()
             Serial.println("Max people reached! Blinking red LED...");
 
             // Rood lampje 3 keer laten knipperen
-            for (int i = 0; i < 3; i++)
+            int blinkCount = 0;
+            while (blinkCount < 3)
             {
                 digitalWrite(ledPin, HIGH); // Zet het LED aan
                 delay(500);                 // Wacht 500 milliseconden
                 digitalWrite(ledPin, LOW);  // Zet het LED uit
                 delay(500);                 // Wacht 500 milliseconden
+                blinkCount++;
             }
         }
 
