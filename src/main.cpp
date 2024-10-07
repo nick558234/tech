@@ -1,93 +1,89 @@
 #include <Arduino.h>
 #include <Display.h>
 
-const int buttonPin = 8;
-const int buttonPin2 = 9;
-const int ledPin = 4;
-const int ledPin2 = 6;
-int count = 3;
-int count2 = 5;
-unsigned long lastDebounceTime1 = 0;
-unsigned long lastDebounceTime2 = 0;
-const unsigned long debounceDelay = 50;
+const int lightSensorPin = A2;  
+const int potPin = A1;          
+const int muteButtonPin = 8;    
+const int buzzerPin = 3;        
+const int ledPinRed = 4;        
+const int ledPinYellow = 7;     
+const int ledPinGreen = 5;  
+const int ledPinBlue = 6;    
+const float R25 = 10000;        
+const float B = 3950;           
 
-void setup()
-{
-  Serial.begin(9600);
-  pinMode(ledPin, OUTPUT);
-  pinMode(ledPin2, OUTPUT);
-  pinMode(buttonPin, INPUT_PULLUP);
-  pinMode(buttonPin2, INPUT_PULLUP);
-  Display.show("Ready");
+bool isMuted = false;             
+int lightThreshold;               
+
+void setup() {
+    pinMode(buzzerPin, OUTPUT);
+    pinMode(ledPinRed, OUTPUT);
+    pinMode(ledPinYellow, OUTPUT);
+    pinMode(ledPinGreen, OUTPUT);
+    pinMode(ledPinBlue, OUTPUT);
+    pinMode(muteButtonPin, INPUT_PULLUP); 
+    Serial.begin(9600);
 }
 
-void turnLedOn()
-{
-  digitalWrite(ledPin, HIGH);
-  Display.show("pres");
-  delay(400);
-  digitalWrite(ledPin, LOW);
-  Display.show("off");
-  delay(400);
-}
+void loop() {
+    int lightLevel = analogRead(lightSensorPin);
+    int potValue = analogRead(potPin); 
+    lightThreshold = map(potValue, 0, 1023, 100, 800); // Map to a range
 
-void turnLed2On()
-{
-  digitalWrite(ledPin2, HIGH);
-  Display.show("pres");
-  delay(400);
-  digitalWrite(ledPin2, LOW);
-  Display.show("off");
-  delay(400);
-}
-
-void turnbothLedOn()
-{
-  digitalWrite(ledPin, HIGH);
-  digitalWrite(ledPin2, HIGH);
-  Display.show("pres");
-  delay(400);
-  digitalWrite(ledPin, LOW);
-  digitalWrite(ledPin2, LOW);
-  Display.show("off");
-  delay(400);
-}
-
-bool buttonRead(int pin, unsigned long &lastDebounceTime)
-{
-  int reading = digitalRead(pin);
-  if (reading == LOW)
-  {
-    if ((millis() - lastDebounceTime) > debounceDelay)
-    {
-      lastDebounceTime = millis();
-      return true;
+    // Read button state
+    if (digitalRead(muteButtonPin) == LOW) {
+        isMuted = !isMuted; // Toggle mute state
+        delay(200); // Debounce delay
     }
-  }
-  return false;
-}
+    if (digitalRead(muteButtonPin) == HIGH) {
+        isMuted = isMuted; // Toggle mute state
+        delay(200); // Debounce delay
+    }
 
-void loop()
-{
-  if (buttonRead(buttonPin, lastDebounceTime1) && buttonRead(buttonPin2, lastDebounceTime2))
-  {
-    for (int i = 0; i < count2; i++)
+    // Read temperature from NTC thermistor
+    int analogValue = analogRead(A1); // Read thermistor
+    float resistance = (1023.0 / analogValue - 1) * R25; // Calculate resistance
+    float temperature = (1.0 / (log(resistance / R25) / B + 1 / 298.15)) - 273.15; // Convert to Celsius
+
+    // Print light level and temperature
+    Serial.print("Lichtniveau: ");
+    Serial.print(lightLevel);
+    Serial.print(" | Temperatuur: ");
+    Serial.println(temperature);
+    
+    // Debugging: Print mute status
+    Serial.print("Muted: ");
+    Serial.println(isMuted);
+
+    // Condition to trigger buzzer
+
+    
+     if (!isMuted && temperature > 20) {
+        tone(buzzerPin, 50);
+        digitalWrite(ledPinRed, HIGH);
+        digitalWrite(ledPinYellow, LOW); 
+        digitalWrite(ledPinGreen, LOW); 
+        
+    }    
+    else if (!isMuted)
     {
-      turnbothLedOn();
+     digitalWrite(ledPinBlue, HIGH);
     }
-  }
-  else if (buttonRead(buttonPin, lastDebounceTime1))
-  {
-    for (int i = 0; i < count; i++)
-    {
-      turnLedOn();
+    else if (temperature > 19.75) { // Between 19.75°C and 20°C
+        noTone(buzzerPin); // Turn off the buzzer
+        digitalWrite(ledPinRed, LOW); 
+        digitalWrite(ledPinYellow, HIGH); 
+        digitalWrite(ledPinGreen, LOW); 
+    } 
+  
+    else { 
+        noTone(buzzerPin); // Turn off the buzzer
+        digitalWrite(ledPinRed, LOW); 
+        digitalWrite(ledPinYellow, LOW); 
+        digitalWrite(ledPinGreen, HIGH); 
     }
-  }
-  else if (buttonRead(buttonPin2, lastDebounceTime2))
-  {
-    for (int i = 0; i < count; i++)
-    {
-      turnLed2On();
-    }
-  }
+    
+    Display.show(temperature); // Display temperature on your display
+
+    delay(500); // Short delay before next loop iteration
 }
