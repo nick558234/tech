@@ -30,13 +30,9 @@ void loop() {
     int potValue = analogRead(potPin); 
     lightThreshold = map(potValue, 0, 1023, 100, 800); // Map to a range
 
-    // Read button state
+    // Read button state (toggle mute on button press)
     if (digitalRead(muteButtonPin) == LOW) {
         isMuted = !isMuted; // Toggle mute state
-        delay(200); // Debounce delay
-    }
-    if (digitalRead(muteButtonPin) == HIGH) {
-        isMuted = isMuted; // Toggle mute state
         delay(200); // Debounce delay
     }
 
@@ -55,32 +51,34 @@ void loop() {
     Serial.print("Muted: ");
     Serial.println(isMuted);
 
-    // Condition to trigger buzzer
-
-    
-     if (!isMuted && temperature > 20) {
-        tone(buzzerPin, 50);
-        digitalWrite(ledPinRed, HIGH);
-        digitalWrite(ledPinYellow, LOW); 
-        digitalWrite(ledPinGreen, LOW); 
+    // Handle LED and buzzer behavior based on mute state and temperature
+    if (isMuted) {
+        // When muted, turn off all other LEDs and buzzer, turn on blue LED
+        noTone(buzzerPin);            // Turn off the buzzer
+        digitalWrite(ledPinRed, LOW);  // Turn off red LED
+        digitalWrite(ledPinYellow, LOW); // Turn off yellow LED
+        digitalWrite(ledPinGreen, LOW); // Turn off green LED
+        digitalWrite(ledPinBlue, HIGH); // Turn on blue LED to indicate mute
+    } else {
+        // When not muted, control LEDs and buzzer based on temperature
+        digitalWrite(ledPinBlue, LOW); // Turn off blue LED (since not muted)
         
-    }    
-    else if (!isMuted)
-    {
-     digitalWrite(ledPinBlue, HIGH);
-    }
-    else if (temperature > 19.75) { // Between 19.75°C and 20°C
-        noTone(buzzerPin); // Turn off the buzzer
-        digitalWrite(ledPinRed, LOW); 
-        digitalWrite(ledPinYellow, HIGH); 
-        digitalWrite(ledPinGreen, LOW); 
-    } 
-  
-    else { 
-        noTone(buzzerPin); // Turn off the buzzer
-        digitalWrite(ledPinRed, LOW); 
-        digitalWrite(ledPinYellow, LOW); 
-        digitalWrite(ledPinGreen, HIGH); 
+        if (temperature > 20) { // Above 20°C, red LED and buzzer on
+            tone(buzzerPin, 100);     // Activate buzzer
+            digitalWrite(ledPinRed, HIGH);    // Turn on red LED
+            digitalWrite(ledPinYellow, LOW);  // Turn off yellow LED
+            digitalWrite(ledPinGreen, LOW);   // Turn off green LED
+        } else if (temperature > 19.75) { // Between 19.75°C and 20°C, yellow LED
+            noTone(buzzerPin);            // Turn off the buzzer
+            digitalWrite(ledPinRed, LOW);     // Turn off red LED
+            digitalWrite(ledPinYellow, HIGH); // Turn on yellow LED
+            digitalWrite(ledPinGreen, LOW);   // Turn off green LED
+        } else { // Below 19.75°C, green LED
+            noTone(buzzerPin);            // Turn off the buzzer
+            digitalWrite(ledPinRed, LOW);     // Turn off red LED
+            digitalWrite(ledPinYellow, LOW);  // Turn off yellow LED
+            digitalWrite(ledPinGreen, HIGH);  // Turn on green LED
+        }
     }
     
     Display.show(temperature); // Display temperature on your display
