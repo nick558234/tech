@@ -11,7 +11,7 @@ const int ledPinGreen = 5;
 const int ledPinBlue = 6;    
 const float R25 = 10000;        
 const float B = 3950;           
-
+const float temperatureFudgeFactor = 3.5;
 bool isMuted = false;             
 int lightThreshold;               
 
@@ -39,7 +39,7 @@ void loop() {
     // Read temperature from NTC thermistor
     int analogValue = analogRead(A1); // Read thermistor
     float resistance = (1023.0 / analogValue - 1) * R25; // Calculate resistance
-    float temperature = (1.0 / (log(resistance / R25) / B + 1 / 298.15)) - 273.15; // Convert to Celsius
+    float temperature = (1.0 / (log(resistance / R25) / B + 1 / 298.15)) - 273.15 - temperatureFudgeFactor; // Convert to Celsius
 
     // Print light level and temperature
     Serial.print("Lichtniveau: ");
@@ -55,29 +55,29 @@ void loop() {
     if (isMuted) {
         // When muted, turn off all other LEDs and buzzer, turn on blue LED
         noTone(buzzerPin);            // Turn off the buzzer
-        digitalWrite(ledPinRed, LOW);  // Turn off red LED
-        digitalWrite(ledPinYellow, LOW); // Turn off yellow LED
-        digitalWrite(ledPinGreen, LOW); // Turn off green LED
-        digitalWrite(ledPinBlue, HIGH); // Turn on blue LED to indicate mute
+        digitalWrite(ledPinRed, LOW);  
+        digitalWrite(ledPinYellow, LOW);
+        digitalWrite(ledPinGreen, LOW); 
+        digitalWrite(ledPinBlue, HIGH); 
     } else {
         // When not muted, control LEDs and buzzer based on temperature
         digitalWrite(ledPinBlue, LOW); // Turn off blue LED (since not muted)
         
         if (temperature > 20) { // Above 20°C, red LED and buzzer on
-            tone(buzzerPin, 100);     // Activate buzzer
-            digitalWrite(ledPinRed, HIGH);    // Turn on red LED
-            digitalWrite(ledPinYellow, LOW);  // Turn off yellow LED
-            digitalWrite(ledPinGreen, LOW);   // Turn off green LED
+            tone(buzzerPin, 10);     // Activate buzzer
+            digitalWrite(ledPinRed, HIGH);   
+            digitalWrite(ledPinYellow, LOW); 
+            digitalWrite(ledPinGreen, LOW);  
         } else if (temperature > 19.75) { // Between 19.75°C and 20°C, yellow LED
-            noTone(buzzerPin);            // Turn off the buzzer
-            digitalWrite(ledPinRed, LOW);     // Turn off red LED
-            digitalWrite(ledPinYellow, HIGH); // Turn on yellow LED
-            digitalWrite(ledPinGreen, LOW);   // Turn off green LED
+            noTone(buzzerPin);          
+            digitalWrite(ledPinRed, LOW);     
+            digitalWrite(ledPinYellow, HIGH); 
+            digitalWrite(ledPinGreen, LOW);   
         } else { // Below 19.75°C, green LED
-            noTone(buzzerPin);            // Turn off the buzzer
-            digitalWrite(ledPinRed, LOW);     // Turn off red LED
-            digitalWrite(ledPinYellow, LOW);  // Turn off yellow LED
-            digitalWrite(ledPinGreen, HIGH);  // Turn on green LED
+            noTone(buzzerPin);           
+            digitalWrite(ledPinRed, LOW);    
+            digitalWrite(ledPinYellow, LOW); 
+            digitalWrite(ledPinGreen, HIGH); 
         }
     }
     
